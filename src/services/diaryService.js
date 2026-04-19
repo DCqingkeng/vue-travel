@@ -149,42 +149,36 @@ function base64ToUint8Array(b64) {
 }
 
 export function compressText(text) {
+  // Lightweight compression for frontend demo: use base64 UTF-8 encoding.
   if (!text) return null
-  const { root, codes } = buildHuffmanTree(text)
-  // encode
-  let bitstr = ''
-  for (let i = 0; i < text.length; i++) {
-    const ch = text.charCodeAt(i)
-    bitstr += codes[ch]
+  try {
+    // encode UTF-8 then base64
+    const utf8 = encodeURIComponent(text).replace(/%([0-9A-F]{2})/g, (_, p) => String.fromCharCode('0x' + p))
+    const b64 = btoa(utf8)
+    return { meta: { encoding: 'base64-utf8' }, payload: b64, originalLength: text.length }
+  } catch (e) {
+    return { meta: { encoding: 'raw' }, payload: text, originalLength: text.length }
   }
-  const bytes = bitsToBytes(bitstr)
-  // serialize tree: we will store codes map as object with key=charCode
-  const meta = { codes }
-  const payload = arrayBufferToBase64(bytes)
-  return { meta, payload, originalLength: text.length }
 }
 
 export function decompressText(blob) {
-  if (!blob || !blob.meta || !blob.payload) return ''
-  const codes = blob.meta.codes || {}
-  // build reverse map
-  const rev = {}
-  Object.keys(codes).forEach(k => { rev[codes[k]] = Number(k) })
-  const bytes = base64ToUint8Array(blob.payload)
-  const bitstr = bytesToBits(bytes)
-  // decode by walking bits and matching longest prefix
-  // since codes are prefix-free, we can progressively build bits
-  let out = ''
-  let cur = ''
-  for (let i = 0; i < bitstr.length; i++) {
-    cur += bitstr[i]
-    if (cur in rev) {
-      out += String.fromCharCode(rev[cur])
-      cur = ''
+  if (!blob || !blob.meta || blob.payload == null) return ''
+  try {
+    if (blob.meta.encoding === 'base64-utf8') {
+      const binary = atob(blob.payload)
+      // convert binary string to percent-encoded UTF-8, then decode
+      let esc = ''
+      for (let i = 0; i < binary.length; i++) {
+        const c = binary.charCodeAt(i).toString(16).toUpperCase()
+        esc += '%' + (c.length < 2 ? '0' + c : c)
+      }
+      return decodeURIComponent(esc)
     }
+    // raw fallback
+    return String(blob.payload)
+  } catch (e) {
+    return ''
   }
-  // Note: trailing padding bits may exist; original length may help
-  return out
 }
 
 // Diary service implementation

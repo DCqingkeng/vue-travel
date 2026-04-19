@@ -41,31 +41,11 @@ export function euclideanDistance(a, b) {
   return Math.sqrt(dx * dx + dy * dy)
 }
 
-// Build a KD-tree for 2D points
+// For frontend usage we keep a lightweight API: buildKDTree returns a shallow copy of points.
+// Nearest neighbor queries will perform a linear scan over the points. This is simpler and
+// easier to maintain; it's acceptable for typical small-medium datasets in the browser.
 export function buildKDTree(points = [], options = {}) {
-  const getCoords = options.getCoords || defaultGetCoords
-
-  function build(list, depth = 0) {
-    if (!list.length) return null
-    const axis = depth % 2
-    // sort by axis
-    list.sort((A, B) => {
-      const a = getCoords(A)[axis]
-      const b = getCoords(B)[axis]
-      return a - b
-    })
-    const mid = Math.floor(list.length / 2)
-    const node = {
-      point: list[mid],
-      left: build(list.slice(0, mid), depth + 1),
-      right: build(list.slice(mid + 1), depth + 1),
-      axis
-    }
-    return node
-  }
-
-  // clone array so that sort doesn't mutate caller's array
-  return build(points.slice(), 0)
+  return Array.isArray(points) ? points.slice() : []
 }
 
 // Simple max-heap implementation for fixed size k
@@ -121,56 +101,22 @@ class MaxHeap {
 // Find k nearest neighbors to target (array or point object depending on getCoords)
 // options: k, maxDistance (meters when using haversine), distance ("haversine" or "euclidean"), getCoords
 export function nearestNeighbors(tree, target, k = 1, options = {}) {
-  if (!tree) return []
+  const pts = Array.isArray(tree) ? tree : (tree && tree.points) ? tree.points : []
+  if (!pts || !pts.length) return []
   const getCoords = options.getCoords || defaultGetCoords
   const mode = options.distance || 'haversine'
   const distFn = mode === 'euclidean' ? euclideanDistance : haversineDistance
   const targetCoords = getCoords(target)
-  const heap = new MaxHeap(k)
   const maxDistance = (typeof options.maxDistance === 'number') ? options.maxDistance : Infinity
 
-  function search(node) {
-    if (!node) return
-    const pointCoords = getCoords(node.point)
-    const d = distFn(pointCoords, targetCoords)
-    if (d <= maxDistance) {
-      heap.push({ point: node.point, dist: d })
-    }
-    const axis = node.axis
-    // distance along axis (for lat/lon this is degrees; safe pruning when using euclidean, for haversine we approximate)
-    const diff = targetCoords[axis] - pointCoords[axis]
-
-    let first = node.left
-    let second = node.right
-    if (diff > 0) { first = node.right; second = node.left }
-
-    search(first)
-
-    // compute bounding condition: there may still be closer points in other side
-    let shouldCheckOther = false
-    if (heap.size() < k) shouldCheckOther = true
-    else if (heap.peek()) {
-      const farthest = heap.peek().dist
-      // For haversine we need to convert axis-diff (degrees) to meters conservatively
-      if (mode === 'haversine') {
-        // create a point shifted by diff on that axis
-        const tmp = targetCoords.slice()
-        tmp[axis] = pointCoords[axis]
-        const axisDist = distFn(tmp, targetCoords)
-        if (axisDist <= farthest) shouldCheckOther = true
-      } else {
-        if (Math.abs(diff) <= farthest) shouldCheckOther = true
-      }
-    }
-
-    if (shouldCheckOther) search(second)
+  const results = []
+  for (const p of pts) {
+    const pc = getCoords(p)
+    const d = distFn(pc, targetCoords)
+    if (d <= maxDistance) results.push({ point: p, distance: d })
   }
-
-  search(tree)
-
-  // extract results sorted by distance ascending
-  const results = heap.data.slice().sort((a, b) => a.dist - b.dist).map(x => ({ point: x.point, distance: x.dist }))
-  return results
+  results.sort((a, b) => a.distance - b.distance)
+  return results.slice(0, Math.max(1, k))
 }
 
 export default {

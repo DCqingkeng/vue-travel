@@ -1,4 +1,4 @@
-import { buildKDTree, nearestNeighbors } from '@/utils/placeSearch'
+import { buildKDTree, nearestNeighbors } from '../utils/placeSearch'
 
 // Factory for a place search service that maintains an index (KD-Tree) and a place list.
 // Usage:
