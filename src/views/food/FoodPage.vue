@@ -44,7 +44,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import api from '../../services/api'
 
 const currentCategory = ref('all')
 
@@ -58,74 +59,22 @@ const categories = [
   { label: '甜品', value: 'dessert', icon: '🍰' }
 ]
 
-const foods = ref([
-  {
-    id: 1,
-    name: '北京烤鸭',
-    location: '北京',
-    category: 'all',
-    description: '皮脆肉嫩，肥而不腻，中华美食的代表',
-    tags: ['老字号', '必吃', '传统'],
-    rating: 4.8,
-    price: '¥200/人',
-    likes: 328
-  },
-  {
-    id: 2,
-    name: '重庆火锅',
-    location: '重庆',
-    category: 'sichuan',
-    description: '麻辣鲜香，食材丰富，冬日里的温暖',
-    tags: ['麻辣', '聚餐', '特色'],
-    rating: 4.7,
-    price: '¥120/人',
-    likes: 256
-  },
-  {
-    id: 3,
-    name: '广式早茶',
-    location: '广州',
-    category: 'cantonese',
-    description: '虾饺、烧卖、叉烧包，精致美味的点心文化',
-    tags: ['精致', '早餐', '文化'],
-    rating: 4.9,
-    price: '¥80/人',
-    likes: 189
-  },
-  {
-    id: 4,
-    name: '长沙臭豆腐',
-    location: '长沙',
-    category: 'hunan',
-    description: '闻着臭吃着香，外酥里嫩，回味无穷',
-    tags: ['小吃', '街头', '特色'],
-    rating: 4.5,
-    price: '¥15/份',
-    likes: 145
-  },
-  {
-    id: 5,
-    name: '西湖醋鱼',
-    location: '杭州',
-    category: 'jiangzhe',
-    description: '酸甜适口，鱼肉鲜嫩，西湖名菜',
-    tags: ['名菜', '清淡', '传统'],
-    rating: 4.6,
-    price: '¥150/人',
-    likes: 112
-  },
-  {
-    id: 6,
-    name: '肉夹馍',
-    location: '西安',
-    category: 'snack',
-    description: '腊汁肉配白吉馍，陕西小吃的代表',
-    tags: ['小吃', '便携', '美味'],
-    rating: 4.7,
-    price: '¥12/个',
-    likes: 234
+const foods = ref([])
+
+const fallbackFoods = [
+  { id: 1, name: '北京烤鸭', location: '北京', category: 'all', description: '皮脆肉嫩，肥而不腻，中华美食的代表', tags: ['老字号', '必吃', '传统'], rating: 4.8, price: '¥200/人', likes: 328 }
+]
+
+onMounted(async () => {
+  try {
+    // backend does not provide a food endpoint yet; using hot destinations as placeholder
+    const list = await api.getHotDestinations({ limit: 20 })
+    foods.value = Array.isArray(list) ? list : (list && list.data) ? list.data : list || fallbackFoods
+  } catch (e) {
+    console.warn('food fetch failed', e)
+    foods.value = fallbackFoods
   }
-])
+})
 
 const filteredFoods = computed(() => {
   if (currentCategory.value === 'all') return foods.value

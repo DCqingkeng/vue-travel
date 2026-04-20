@@ -106,8 +106,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { introsort } from '../../utils/sort'
+import api from '../../services/api'
 
 const categories = [
   { label: '全部', value: 'all' },
@@ -125,17 +126,24 @@ const sortBy = ref('popular')
 const currentPage = ref(1)
 const pageSize = ref(6)
 
-const destinations = ref([
+const destinations = ref([])
+
+// sample fallback data if API not available
+const fallbackDestinations = [
   { id: 1, name: '三亚', location: '海南省', category: 'island', description: '阳光、沙滩、椰林，享受热带海岛风情。适合度假与海上活动。', tags: ['海滩', '度假', '潜水'], rating: 4.8, price: 2000 },
-  { id: 2, name: '张家界', location: '湖南省', category: 'mountain', description: '奇峰异石，云雾缭绕，人间仙境，适合徒步与摄影。', tags: ['自然风光', '徒步', '摄影'], rating: 4.7, price: 1500 },
-  { id: 3, name: '丽江', location: '云南省', category: 'ancient', description: '古城韵味，纳西文化，浪漫之都，古镇漫步非常惬意。', tags: ['古镇', '文化', '美食'], rating: 4.6, price: 1800 },
-  { id: 4, name: '杭州西湖', location: '浙江省', category: 'city', description: '西湖美景，茶文化与江南水乡的融合。适合慢旅行与品茶。', tags: ['文化', '湖泊', '美食'], rating: 4.7, price: 1200 },
-  { id: 5, name: '鼓浪屿', location: '福建省', category: 'island', description: '海风与历史建筑并存的小岛，适合休闲漫步。', tags: ['海滩', '音乐', '建筑'], rating: 4.5, price: 900 },
-  { id: 6, name: '九寨沟', location: '四川省', category: 'mountain', description: '五彩池与原始森林，观赏自然景观的绝佳地点。', tags: ['自然风光', '摄影', '徒步'], rating: 4.8, price: 2100 },
-  { id: 7, name: '苏州古典园林', location: '江苏省', category: 'ancient', description: '园林与水巷，体验江南古韵与美学。', tags: ['古镇', '文化', '园林'], rating: 4.6, price: 800 },
-  { id: 8, name: '海南三沙', location: '海南省', category: 'island', description: '偏远海岛，适合深度潜水与海钓。', tags: ['潜水', '探险', '海鲜'], rating: 4.4, price: 2500 },
-  { id: 9, name: '成都', location: '四川省', category: 'city', description: '美食与慢生活的城市，适合美食探索。', tags: ['美食', '文化', '休闲'], rating: 4.7, price: 1000 }
-])
+  { id: 2, name: '张家界', location: '湖南省', category: 'mountain', description: '奇峰异石，云雾缭绕，人间仙境，适合徒步与摄影。', tags: ['自然风光', '徒步', '摄影'], rating: 4.7, price: 1500 }
+]
+
+onMounted(async () => {
+  try {
+    const data = await api.getTopDestinations({ userId: 1, topK: 20 })
+    // API may return array or wrapped result
+    destinations.value = Array.isArray(data) ? data : (data && data.data) ? data.data : data || fallbackDestinations
+  } catch (e) {
+    console.warn('recommend fetch failed, using fallback', e)
+    destinations.value = fallbackDestinations
+  }
+})
 
 // 处理 tags 列表
 const allTags = computed(() => {

@@ -52,7 +52,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import api from '../../services/api'
 
 const searchQuery = ref('')
 const currentTab = ref('all')
@@ -65,7 +66,9 @@ const tabs = [
   { label: '购物', value: 'shopping', icon: '🛍️' }
 ]
 
-const venues = ref([
+const venues = ref([])
+
+const fallbackVenues = [
   {
     id: 1,
     name: '故宫博物院',
@@ -77,32 +80,18 @@ const venues = ref([
     distance: '2.5km',
     tags: ['历史', '文化', '必游'],
     category: 'attraction'
-  },
-  {
-    id: 2,
-    name: '希尔顿酒店',
-    type: '酒店',
-    address: '北京市朝阳区东三环北路',
-    description: '五星级豪华酒店，设施完善，服务优质',
-    rating: 4.7,
-    price: '¥800/晚',
-    distance: '5.2km',
-    tags: ['五星', '商务', '豪华'],
-    category: 'hotel'
-  },
-  {
-    id: 3,
-    name: '全聚德烤鸭店',
-    type: '餐厅',
-    address: '北京市东城区前门大街',
-    description: '百年老字号，正宗北京烤鸭',
-    rating: 4.5,
-    price: '¥200/人',
-    distance: '3.1km',
-    tags: ['老字号', '烤鸭', '特色菜'],
-    category: 'restaurant'
   }
-])
+]
+
+onMounted(async () => {
+  try {
+    const results = await api.getHotDestinations({ limit: 20 })
+    venues.value = Array.isArray(results) ? results : (results && results.data) ? results.data : results || fallbackVenues
+  } catch (e) {
+    console.warn('venue fetch failed', e)
+    venues.value = fallbackVenues
+  }
+})
 
 const filteredVenues = computed(() => {
   let result = venues.value
