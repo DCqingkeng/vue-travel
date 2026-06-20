@@ -1,7 +1,7 @@
 import axios from 'axios'
 import router from '../router'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
 const instance = axios.create({
   baseURL: API_BASE,
@@ -35,25 +35,23 @@ instance.interceptors.response.use(
       const err = new Error(d.message || 'API error')
       err.code = d.code
       err.data = d.data
-      // on auth related codes, redirect to login
       if (d.code === 401) {
         try { router.push({ name: 'Login' }) } catch (e) {}
       }
       throw err
     }
-    // if no wrapper, return data
     return d
   },
   err => {
     if (err.response) {
-      // HTTP status based handling
       if (err.response.status === 401) {
         try { router.push({ name: 'Login' }) } catch (e) {}
         return Promise.reject(new Error('Unauthorized'))
       }
       if (err.response.data) {
         const d = err.response.data
-        const e = new Error(d.message || 'HTTP error')
+        const message = d.message || d.error || d.msg || `HTTP ${err.response.status}`
+        const e = new Error(message)
         e.status = err.response.status
         e.data = d
         return Promise.reject(e)

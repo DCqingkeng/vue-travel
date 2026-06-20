@@ -1,53 +1,64 @@
-/* color palette from <https://github.com/vuejs/theme> */
-:root {
-  --vt-c-white: #ffffff;
-  --vt-c-white-soft: #f8f8f8;
-  --vt-c-white-mute: #f2f2f2;
-
-  --vt-c-black: #181818;
-  --vt-c-black-soft: #222222;
-  --vt-c-black-mute: #282828;
-
-  --vt-c-indigo: #2c3e50;
-
-  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
-
-  --vt-c-text-light-1: var(--vt-c-indigo);
-  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
-  --vt-c-text-dark-1: var(--vt-c-white);
-  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+html, body {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(108, 140, 103, 0.18), transparent 25%),
+    radial-gradient(circle at 80% 10%, rgba(180, 140, 90, 0.12), transparent 20%),
+    radial-gradient(circle at bottom, rgba(40, 60, 90, 0.12), transparent 25%),
+    #050505 !important;
 }
 
-/* semantic color variables for this project */
 :root {
-  --color-background: var(--vt-c-white);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-background-mute: var(--vt-c-white-mute);
+  --morandi-sage: #9caf88;
+  --morandi-dusty-rose: #c4a4a4;
+  --morandi-slate: #7d8b8c;
+  --morandi-cream: #e8e3d9;
+  --morandi-taupe: #b8a99a;
+  --morandi-blue: #8fa3b5;
+  --morandi-mauve: #a89ca8;
+  --morandi-clay: #c9b8a7;
+  --morandi-olive: #9b9b7a;
 
-  --color-border: var(--vt-c-divider-light-2);
-  --color-border-hover: var(--vt-c-divider-light-1);
+  --morandi-bg-primary: #050505;
+  --morandi-bg-secondary: #101312;
+  --morandi-bg-tertiary: #171b19;
 
-  --color-heading: var(--vt-c-text-light-1);
-  --color-text: var(--vt-c-text-light-1);
+  --morandi-text-primary: #ffffff;
+  --morandi-text-secondary: #f2f2f2;
+  --morandi-text-muted: #c9c9c9;
 
+  --morandi-accent: #9caf88;
+  --morandi-accent-hover: #8a9e76;
+
+  --morandi-border: #2a2a2a;
+  --morandi-border-light: #3a3a3a;
+}
+
+:root {
+  --color-background: var(--morandi-bg-primary);
+  --color-background-soft: var(--morandi-bg-secondary);
+  --color-background-mute: var(--morandi-bg-tertiary);
+
+  --color-border: var(--morandi-border);
+  --color-border-hover: var(--morandi-border-light);
+
+  --color-heading: var(--morandi-text-primary);
+  --color-text: var(--morandi-text-secondary);
+
+  --bg-primary: var(--morandi-bg-primary);
+  --bg-secondary: var(--morandi-bg-secondary);
+  --bg-tertiary: var(--morandi-bg-tertiary);
+  --text: var(--morandi-text-primary);
+  --text-secondary: var(--morandi-text-secondary);
+  --muted: var(--morandi-text-muted);
+  --theme: var(--morandi-accent);
+  --theme-hover: var(--morandi-accent-hover);
+  --card-bg: #111111;
+  --card-border: var(--morandi-border);
+  --nav-height: 64px;
+  --container-max: 1720px;
+  --container-gutter: clamp(20px, 4vw, 56px);
+  --transition: cubic-bezier(0.16, 1, 0.3, 1);
+  --hero-title: clamp(2.5rem, 5vw, 4rem);
   --section-gap: 160px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: var(--vt-c-black);
-    --color-background-soft: var(--vt-c-black-soft);
-    --color-background-mute: var(--vt-c-black-mute);
-
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
-
-    --color-heading: var(--vt-c-text-dark-1);
-    --color-text: var(--vt-c-text-dark-2);
-  }
 }
 
 *,
@@ -61,7 +72,11 @@
 body {
   min-height: 100vh;
   color: var(--color-text);
-  background: var(--color-background);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(108, 140, 103, 0.18), transparent 25%),
+    radial-gradient(circle at 80% 10%, rgba(180, 140, 90, 0.12), transparent 20%),
+    radial-gradient(circle at bottom, rgba(40, 60, 90, 0.12), transparent 25%),
+    var(--morandi-bg-primary);
   transition:
     color 0.5s,
     background-color 0.5s;
@@ -83,4 +98,24 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #050505;
+    --color-background-soft: #101312;
+    --color-background-mute: #171b19;
+    --color-border: #2a2a2a;
+    --color-border-hover: #3a3a3a;
+    --color-heading: #ffffff;
+    --color-text: #f2f2f2;
+    --bg-primary: #050505;
+    --bg-secondary: #101312;
+    --bg-tertiary: #171b19;
+    --text: #ffffff;
+    --text-secondary: #f2f2f2;
+    --muted: #c9c9c9;
+    --card-bg: #111111;
+    --card-border: #2a2a2a;
+  }
 }

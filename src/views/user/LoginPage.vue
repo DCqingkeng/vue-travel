@@ -1,124 +1,255 @@
 <template>
-  <div class="page-root">
-    <main class="container" role="main">
-      <section class="card" aria-labelledby="login-title">
-        <h1 id="login-title">登录</h1>
+  <div class="login-page">
+    <div class="background-media">
+      <img :src="loginBackground" alt="travel background" />
+      <div class="background-overlay"></div>
+      <div class="background-glow glow-left"></div>
+      <div class="background-glow glow-right"></div>
+    </div>
 
-        <p class="lead">使用您的账号登录以访问个人中心、收藏与日记。</p>
-
-        <form class="form" @submit.prevent="doLogin" novalidate>
-          <label class="field">
-            <span class="label-text">用户名</span>
-            <input
-              v-model="username"
-              :disabled="loading"
-              class="input"
-              type="text"
-              id="username"
-              name="username"
-              autocomplete="username"
-              required
-              :aria-invalid="!!error"
-              aria-describedby="err-msg"
-            />
-          </label>
-
-          <label class="field">
-            <span class="label-text">密码</span>
-            <input
-              v-model="password"
-              :disabled="loading"
-              class="input"
-              type="password"
-              id="password"
-              name="password"
-              autocomplete="current-password"
-              required
-              :aria-invalid="!!error"
-              aria-describedby="err-msg"
-            />
-          </label>
-
-          <div class="actions">
-            <button
-              class="btn"
-              type="submit"
-              :disabled="loading || !canSubmit"
-              :aria-busy="loading ? 'true' : 'false'"
-              aria-live="polite"
-            >
-              <span class="btn-content">
-                <span class="btn-icon" aria-hidden>🔒</span>
-                <span v-if="!loading && !success">登录</span>
-                <span v-else-if="loading" class="sr-only">登录中</span>
-                <span v-else-if="success" class="success-icon" aria-hidden>✔</span>
-              </span>
-            </button>
-            <router-link to="/register" class="link">注册新账号</router-link>
+    <div class="login-shell">
+      <section class="login-card glass-panel">
+        <div class="brand-row">
+          <div class="brand-lockup">
+            <span class="brand-icon">旅</span>
+            <div>
+              <p class="eyebrow">Travel Assistant</p>
+              <h1>旅游助手</h1>
+            </div>
           </div>
+          <a href="/" class="browse-link">浏览首页</a>
+        </div>
+
+        <div class="intro-copy">
+          <h2>{{ isLogin ? '欢迎回来' : '创建账号' }}</h2>
+          <p>
+            {{
+              isLogin
+                ? '登录后即可访问个人中心、路线收藏与个性化推荐。'
+                : '注册一个新账号，开始你的旅行记录与推荐探索。'
+            }}
+          </p>
+        </div>
+
+        <form class="login-form" @submit.prevent="handleSubmit">
+          <label class="field">
+            <span>用户名</span>
+            <input
+              id="username"
+              v-model="form.username"
+              type="text"
+              placeholder="请输入用户名"
+              required
+              :disabled="loading"
+            />
+          </label>
+
+          <label v-if="!isLogin" class="field">
+            <span>昵称</span>
+            <input
+              id="nickname"
+              v-model="form.nickname"
+              type="text"
+              placeholder="请输入昵称（可选）"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="field">
+            <span>密码</span>
+            <div class="password-shell">
+              <input
+                id="password"
+                v-model="form.password"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="请输入密码"
+                required
+                :disabled="loading"
+              />
+              <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+                {{ showPassword ? '隐藏' : '显示' }}
+              </button>
+            </div>
+          </label>
+
+          <label v-if="!isLogin" class="field">
+            <span>确认密码</span>
+            <div class="password-shell">
+              <input
+                id="confirmPassword"
+                v-model="form.confirmPassword"
+                :type="showConfirmPassword ? 'text' : 'password'"
+                placeholder="请再次输入密码"
+                required
+                :disabled="loading"
+              />
+              <button type="button" class="toggle-password" @click="showConfirmPassword = !showConfirmPassword">
+                {{ showConfirmPassword ? '隐藏' : '显示' }}
+              </button>
+            </div>
+          </label>
+
+          <div v-if="isLogin" class="form-options">
+            <label class="remember-me">
+              <input v-model="rememberMe" type="checkbox" />
+              <span>保持登录</span>
+            </label>
+            <button type="button" class="text-action" @click="forgotPassword">忘记密码？</button>
+          </div>
+
+          <div v-if="error" class="error-message">
+            {{ error }}
+          </div>
+
+          <button type="submit" class="submit-btn" :disabled="loading || !isFormValid">
+            <span v-if="loading" class="loading-spinner"></span>
+            <span v-else>{{ isLogin ? '登录' : '注册' }}</span>
+          </button>
         </form>
 
-        <div v-if="error" class="error" role="alert">
-          {{ error }}
-          <div class="error-action">
-            <button class="link-btn" @click="focusUsername">检查用户名</button>
-            <button class="link-btn" @click="clearPassword">清除密码并重试</button>
-          </div>
+        <div class="switch-mode">
+          <span>{{ isLogin ? '还没有账号？' : '已经有账号？' }}</span>
+          <button type="button" class="text-action" @click="toggleMode">
+            {{ isLogin ? '立即注册' : '立即登录' }}
+          </button>
+        </div>
+
+        <div class="footer-links">
+          <a href="#">帮助</a>
+          <a href="#">隐私政策</a>
+          <a href="#">使用条款</a>
+          <a href="#">无障碍访问</a>
+        </div>
+
+        <div class="copyright">
+          <p>© 2026 旅游助手 - 让旅行更轻松</p>
+          <p class="powered-by">Powered by OpenClaw</p>
         </div>
       </section>
-    </main>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import userApi from '@/services/user'
-import userSvc from '@/services/userService'
+import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import userApi from '@/services/user'
+import loginBackground from '../../../photo/首页图片/10.jpg'
 
 const router = useRouter()
 
-const username = ref('')
-const password = ref('')
+const isLogin = ref(true)
 const loading = ref(false)
-const success = ref(false)
 const error = ref('')
+const rememberMe = ref(false)
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
 
-const canSubmit = computed(() => username.value.trim().length > 0 && password.value.length > 0)
+const form = reactive({
+  username: '',
+  nickname: '',
+  password: '',
+  confirmPassword: ''
+})
 
-function focusUsername() {
-  const el = document.querySelector('input[name="username"]')
-  if (el) el.focus()
+const isFormValid = computed(() => {
+  if (!form.username || !form.password) return false
+  if (!isLogin.value) {
+    if (!form.confirmPassword) return false
+    if (form.password !== form.confirmPassword) return false
+  }
+  return true
+})
+
+function resetForm() {
+  form.username = ''
+  form.nickname = ''
+  form.password = ''
+  form.confirmPassword = ''
 }
 
-function clearPassword() {
-  password.value = ''
-  const el = document.querySelector('input[name="password"]')
-  if (el) el.focus()
-}
-
-async function doLogin() {
+function toggleMode() {
+  isLogin.value = !isLogin.value
   error.value = ''
-  if (!canSubmit.value) { error.value = '请输入用户名和密码（密码至少1个字符）。'; focusUsername(); return }
+  resetForm()
+}
+
+function forgotPassword() {
+  window.alert('密码重置功能开发中，请联系管理员。')
+}
+
+async function handleSubmit() {
+  error.value = ''
   loading.value = true
-  success.value = false
+
   try {
-    const data = await userApi.login({ username: username.value, password: password.value })
-    const token = data && data.token
-    if (token) localStorage.setItem('authToken', token)
-    // best-effort local demo login for UI
-    try { userSvc.login({ username: username.value, password: password.value }) } catch (e) {}
-    success.value = true
-    // small delay to show success micro-interaction
-    setTimeout(() => router.push({ name: 'UserCenter' }), 450)
-  } catch (e) {
-    // give actionable error messages
-    if (e && e.code === 401) {
-      error.value = '账号或密码错误。请检查后重试，或点击“注册新账号”。'
-    } else if (e && e.message) {
-      error.value = e.message
+    if (isLogin.value) {
+      const res = await userApi.login({
+        username: form.username,
+        password: form.password
+      })
+
+      if (res && res.token) {
+        localStorage.setItem('authToken', res.token)
+
+        const info = res.user || {
+          userId: res.userId,
+          username: res.username,
+          nickname: res.nickname
+        }
+
+        const userInfo = {
+          userId: info.id || info.userId || info.user_id || null,
+          username: info.username || info.name || info.userName || null,
+          nickname: info.nickname || info.nick || info.displayName || ''
+        }
+
+        localStorage.setItem('userInfo', JSON.stringify(userInfo))
+
+        if (rememberMe.value) {
+          localStorage.setItem('rememberMe', 'true')
+        }
+
+        try {
+          window.dispatchEvent(new Event('storage'))
+        } catch (dispatchError) {
+          console.warn('dispatch auth change failed', dispatchError)
+        }
+
+        router.push('/')
+      } else {
+        error.value = '登录失败，请检查用户名和密码。'
+      }
     } else {
-      error.value = '网络或服务器错误，稍后重试。'
+      if (form.password !== form.confirmPassword) {
+        error.value = '两次输入的密码不一致。'
+        loading.value = false
+        return
+      }
+
+      await userApi.register({
+        username: form.username,
+        password: form.password,
+        nickname: form.nickname || form.username
+      })
+
+      window.alert('注册成功，请使用新账号登录。')
+      isLogin.value = true
+      form.password = ''
+      form.confirmPassword = ''
+    }
+  } catch (err) {
+    console.error('API 调用失败:', err)
+    if (err.code === 401 || err.status === 401) {
+      error.value = '用户名或密码错误。'
+    } else if (err.code === 404) {
+      error.value = '用户不存在。'
+    } else if (err.code === 409) {
+      error.value = '用户名已存在。'
+    } else if (err.message && err.message.includes('timeout')) {
+      error.value = '请求超时，请检查网络连接。'
+    } else {
+      error.value = err.message || '网络错误，请稍后重试。'
     }
   } finally {
     loading.value = false
@@ -127,129 +258,348 @@ async function doLogin() {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-
-:root{
-  --scale-base: 1rem; /* 16px */
-  --ratio: 1.25;
-  --space-1: 8px; --space-2: 16px; --space-3: 24px; --space-4: 32px; --space-5: 48px;
-  --max-width: 1280px;
-  --body-max-ch: 65ch;
-  --transition-fast: 150ms;
-  --transition-page: 400ms;
-  --easing: cubic-bezier(0.16, 1, 0.3, 1);
-  /* Theme tokens per request */
-  --accent: oklch(60% 0.20 250); /* main blue */
-  --warm-gray: oklch(95% 0.02 90); /* warm background (slightly yellowish) */
-  --card: oklch(100% 0.01 100); /* near white card */
-  --text-primary: oklch(12% 0.02 120); /* dark text for AA contrast on light bg */
-  --muted: oklch(45% 0.02 100);
-  --danger: oklch(60% 0.18 30);
+.login-page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  color: #f5f1e8;
 }
 
-.page-root{
+.background-media {
+  position: fixed;
+  inset: 0;
+}
+
+.background-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.82) brightness(0.52);
+}
+
+.background-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(8, 12, 10, 0.86), rgba(14, 22, 18, 0.72)),
+    radial-gradient(circle at 18% 18%, rgba(143, 176, 110, 0.18), transparent 22%),
+    radial-gradient(circle at 82% 12%, rgba(200, 169, 107, 0.14), transparent 18%);
+}
+
+.background-glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(90px);
+  opacity: 0.85;
+}
+
+.glow-left {
+  left: -80px;
+  top: 15%;
+  width: 240px;
+  height: 240px;
+  background: rgba(100, 146, 103, 0.22);
+}
+
+.glow-right {
+  right: -60px;
+  bottom: 12%;
+  width: 220px;
+  height: 220px;
+  background: rgba(200, 169, 107, 0.18);
+}
+
+.login-shell {
+  position: relative;
+  z-index: 1;
   min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 96px 20px 32px;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 24px 80px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(24px);
+}
+
+.login-card {
+  width: min(100%, 520px);
+  padding: 28px;
+  border-radius: 32px;
+}
+
+.brand-row,
+.brand-lockup,
+.form-options,
+.footer-links {
   display: flex;
+}
+
+.brand-row {
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.brand-lockup {
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(143, 176, 110, 0.86), rgba(93, 159, 129, 0.82));
+  color: #102116;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: rgba(245, 241, 232, 0.66);
+  font-size: 0.76rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.brand-lockup h1 {
+  margin: 0;
+  font-size: 1.9rem;
+  color: #fff8ee;
+}
+
+.browse-link,
+.text-action,
+.footer-links a {
+  color: #d7f5b2;
+  text-decoration: none;
+}
+
+.browse-link,
+.text-action {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.intro-copy {
+  margin-bottom: 24px;
+}
+
+.intro-copy h2 {
+  margin: 0 0 10px;
+  font-size: 1.8rem;
+  color: #fff8ee;
+}
+
+.intro-copy p {
+  margin: 0;
+  color: rgba(245, 241, 232, 0.72);
+  line-height: 1.7;
+}
+
+.login-form {
+  display: grid;
+  gap: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field span {
+  color: rgba(245, 241, 232, 0.86);
+  font-size: 0.92rem;
+}
+
+.field input {
+  width: 100%;
+  min-height: 54px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff8ee;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  caret-color: #d7f5b2;
+  -webkit-text-fill-color: #fff8ee;
+}
+
+.field input::placeholder {
+  color: rgba(245, 241, 232, 0.42);
+}
+
+.field input:focus {
+  border-color: rgba(143, 176, 110, 0.42);
+  box-shadow: 0 0 0 4px rgba(143, 176, 110, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.field input:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.password-shell {
+  position: relative;
+}
+
+.password-shell input {
+  padding-right: 84px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  color: rgba(245, 241, 232, 0.72);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.form-options {
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.remember-me {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(245, 241, 232, 0.82);
+  cursor: pointer;
+}
+
+.remember-me input {
+  accent-color: #8fb06e;
+}
+
+.error-message {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(146, 46, 46, 0.2);
+  border: 1px solid rgba(255, 145, 145, 0.22);
+  color: #ffd1d1;
+}
+
+.submit-btn {
+  min-height: 54px;
+  border: none;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #8fb06e 0%, #5d9f81 100%);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, var(--warm-gray), color-mix(in oklch, var(--warm-gray) 70%, white 30%));
-  padding: var(--space-4);
-  font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-  color: var(--text-primary);
+  gap: 8px;
+  transition: transform 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
 }
 
-.container{
-  width: 100%;
-  max-width: var(--max-width);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding: var(--space-4);
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
 }
 
-.card{
-  width: 100%;
-  max-width: 420px;
-  background: linear-gradient(180deg, var(--card), color-mix(in oklch, var(--card) 90%, var(--warm-gray) 10%));
-  padding: calc(var(--space-3));
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(20,24,30,0.06), 0 2px 6px rgba(20,24,30,0.04);
-  transition: transform var(--transition-page) var(--easing), box-shadow var(--transition-page) var(--easing), opacity var(--transition-page) var(--easing);
-  will-change: transform, opacity;
-  /* entrance animation */
-  opacity: 0;
-  transform: translateY(16px);
-  animation: slideUp var(--transition-page) var(--easing) both;
-}
-.card:focus-within{ transform: translateY(-2px) scale(1.0); box-shadow: 0 12px 30px rgba(20,24,30,0.08); }
-
-/* hover elevate with subtle scale and shadow */
-.card:hover{
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 18px 40px rgba(20,24,30,0.12);
+.submit-btn:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
 }
 
-h1{ font-size: calc(var(--scale-base) * var(--ratio) * var(--ratio)); margin:0 0 var(--space-2); }
-.lead{ margin: 0 0 var(--space-3); color: color-mix(in oklch, var(--muted) 70%, var(--text-primary) 30%); max-width: var(--body-max-ch); }
-
-.form{ display:flex; flex-direction:column; gap: var(--space-2); }
-.field{ display:flex; flex-direction:column; gap:8px; }
-.label-text{ font-weight:500; font-size: 0.95rem; color: color-mix(in oklch, var(--text-primary) 60%, var(--muted) 40%); }
-
-.input{
-  padding: 12px 14px;
-  border-radius: 8px;
-  border: 1px solid color-mix(in oklch, var(--muted) 80%, black 20%);
-  background: oklch(99% 0.01 100);
-  color: var(--text-primary);
-  font-size: 1rem;
-  transition: box-shadow var(--transition-fast) var(--easing), transform var(--transition-fast) var(--easing), border-color var(--transition-fast) var(--easing);
-}
-.input:focus{ outline: none; box-shadow: 0 6px 18px color-mix(in oklch, var(--accent) 12%, black 88%); transform: translateY(-1px); border-color: var(--accent); }
-
-.actions{ display:flex; align-items:center; gap: var(--space-2); margin-top: var(--space-2); }
-.btn{
-  background: linear-gradient(180deg, color-mix(in oklch, var(--accent) 90%, white 10%), var(--accent));
-  color: white;
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  box-shadow: 0 6px 18px color-mix(in oklch, var(--accent) 14%, black 86%);
-  transition: transform var(--transition-fast) var(--easing), box-shadow var(--transition-fast) var(--easing), filter var(--transition-fast) var(--easing);
-}
-.btn:disabled{ opacity: 0.6; cursor: not-allowed; transform: none }
-.btn:focus{ box-shadow: 0 8px 30px rgba(102,126,234,0.2); }
-
-.btn{ display:inline-flex; align-items:center; gap:10px }
-.btn:hover:not(:disabled){ transform: translateY(-2px); box-shadow: 0 10px 30px rgba(102,126,234,0.12); }
-.btn-icon{ display:inline-block; width:1.1em }
-.success-icon{ color: #28a745; font-weight:700 }
-.btn-content{ display:inline-flex; align-items:center; gap:8px }
-
-.sr-only{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden }
-
-.link{ color: color-mix(in oklch, var(--muted) 70%, var(--text-primary) 30%); font-size:0.95rem; text-decoration:none }
-.link-btn{ background:none; border:none; color:var(--accent); cursor:pointer; margin-left:8px }
-
-.error{ margin-top: var(--space-2); padding: 12px; background: oklch(98% 0.01 100); border-left: 4px solid var(--danger); border-radius:8px; color: color-mix(in oklch, var(--danger) 60%, black 40%); }
-.error-action{ margin-top:8px; display:flex; gap:12px }
-
-.skeleton{ background: linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.02) 37%, rgba(0,0,0,0.06) 63%); background-size: 400% 100%; animation: shimmer 1.2s linear infinite; display:inline-block }
-.skeleton-text{ height:1rem; display:inline-block }
-
-@keyframes shimmer{ 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-
-@keyframes slideUp{
-  from { transform: translateY(16px); opacity: 0 }
-  to   { transform: translateY(0); opacity: 1 }
+.loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.32);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-/* Respect user preference for reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .card{ animation: none !important; transition: none !important; transform: none !important; }
-  .btn, .input, .card, .skeleton{ transition: none !important; animation: none !important }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
+.switch-mode {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  color: rgba(245, 241, 232, 0.72);
+}
+
+.switch-mode .text-action {
+  margin-left: 6px;
+  font-weight: 700;
+}
+
+.footer-links {
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin: 24px 0 18px;
+}
+
+.footer-links a {
+  color: rgba(245, 241, 232, 0.66);
+  font-size: 0.88rem;
+}
+
+.copyright {
+  text-align: center;
+  color: rgba(245, 241, 232, 0.48);
+  font-size: 0.78rem;
+}
+
+.copyright p {
+  margin: 4px 0;
+}
+
+.powered-by {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 640px) {
+  .login-shell {
+    padding-top: 80px;
+  }
+
+  .login-card {
+    padding: 22px;
+    border-radius: 24px;
+  }
+
+  .brand-row,
+  .form-options {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .browse-link {
+    padding-left: 0;
+  }
+}
 </style>

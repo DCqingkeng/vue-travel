@@ -4,6 +4,12 @@ import NotFound from '../views/NotFound.vue'
 
 const routes = [
   {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/user/LoginPage.vue'),
+    meta: { public: true, hideNavbar: true }
+  },
+  {
     path: '/',
     component: MainLayout,
     children: [
@@ -33,9 +39,9 @@ const routes = [
         component: () => import('../views/diary/DiaryPage.vue')
       },
       {
-        path: 'login',
-        name: 'Login',
-        component: () => import('../views/user/LoginPage.vue')
+        path: 'diary/:id',
+        name: 'DiaryDetail',
+        component: () => import('../views/diary/DiaryDetailPage.vue')
       },
       {
         path: 'register',
@@ -56,11 +62,19 @@ const routes = [
         path: 'food',
         name: 'Food',
         component: () => import('../views/food/FoodPage.vue')
+      },
+      {
+        path: 'food/:id',
+        name: 'FoodDetail',
+        component: () => import('../views/food/FoodDetailPage.vue')
+      },
+      {
+        path: 'disaster',
+        name: 'Disaster',
+        component: () => import('../views/disaster/DisasterPage.vue')
       }
     ]
-  }
-  ,
-  // 处理未匹配路由
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -73,20 +87,23 @@ const router = createRouter({
   routes
 })
 
-export default router
-
-// 设置页面标题
 router.afterEach((to) => {
-  const name = to.name || ''
   const titleMap = {
     Home: '首页 - 旅游助手',
     Recommend: '旅游推荐 - 旅游助手',
     Route: '路线规划 - 旅游助手',
     Venue: '场所查询 - 旅游助手',
-    Diary: '旅游日记 - 旅游助手',
+    Diary: '旅行日记 - 旅游助手',
+    DiaryDetail: '日记详情 - 旅游助手',
     Community: '日记交流 - 旅游助手',
-    Food: '美食推荐 - 旅游助手',
+    Food: '美食探索 - 旅游助手',
+    FoodDetail: '美食详情 - 旅游助手',
+    Disaster: '灾情预防 - 旅游助手',
+    Login: '登录 - 旅游助手',
     NotFound: '页面未找到 - 旅游助手'
   }
-  document.title = titleMap[name] || '旅游助手'
+
+  document.title = titleMap[to.name] || '旅游助手'
 })
+
+export default router
